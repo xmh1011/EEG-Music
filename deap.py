@@ -186,8 +186,6 @@ df_arousal = df_labels['High Arousal']
 eeg_channels = np.array(
     ["Fp1", "AF3", "F3", "F7", "FC5", "FC1", "C3", "T7", "CP5", "CP1", "P3", "P7", "PO3", "O1", "Oz", "Pz", "Fp2",
      "AF4", "Fz", "F4", "F8", "FC6", "FC2", "Cz", "C4", "T8", "CP6", "CP2", "P4", "P8", "PO4", "O2"])
-peripheral_channels = np.array(
-    ["hEOG", "vEOG", "zEMG", "tEMG", "GSR", "Respiration belt", "Plethysmograph", "Temperature"])
 
 eeg_data = []
 for i in range(len(data)):
@@ -195,13 +193,6 @@ for i in range(len(data)):
         eeg_data.append(data[i, j])
 eeg_data = np.reshape(eeg_data, (len(data), len(eeg_channels), len(data[0, 0])))
 print(eeg_data.shape)
-
-peripheral_data = []
-for i in range(len(data)):
-    for j in range(32, len(data[0])):
-        peripheral_data.append(data[i, j])
-peripheral_data = np.reshape(peripheral_data, (len(data), len(peripheral_channels), len(data[0, 0])))
-print(peripheral_data.shape)
 
 sns.set(font_scale=1.2)
 
