@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 from torch import optim
@@ -49,7 +48,7 @@ def train_model(args, model, data_loader, criterion, optimizer):
             optimizer.step()
             running_loss += loss.item()
         print('Epoch [%d]     Loss:%8.4f'
-              % (epoch + 1, float(running_loss / (i+1))))
+              % (epoch + 1, float(running_loss / (i + 1))))
     print('Finished training')
 
 
