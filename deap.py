@@ -9,7 +9,6 @@ from scipy.signal import welch
 from scipy.integrate import simps
 from scipy.stats import f_oneway
 
-# !pip install scikit-learn==0.20.3
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -53,7 +52,6 @@ for n in range(1, 23):
         s += '0'
     s += str(n)
     files.append(s)
-print(files)
 
 # 22x40 = 880 trials for 22 participants
 labels = []
@@ -74,16 +72,8 @@ data = np.array(data)
 data = data.flatten()
 data = data.reshape(880, 40, 8064)
 
-# Double-check the new arrays
-print("Labels: ", labels.shape)  # trial x label
-print("Data: ", data.shape)  # trial x channel x data
-
 # Only extract Valence and Arousal ratings
 df_label_ratings = pd.DataFrame({'Valence': labels[:, 0], 'Arousal': labels[:, 1]})
-print(df_label_ratings.describe())
-print(df_label_ratings.head(15))
-# Plot the first 40 data rows (first participant)
-df_label_ratings.iloc[0:40].plot(style=['o', 'rx'])
 
 # High Arousal Positive Valence dataset
 df_hahv = df_label_ratings[
@@ -97,67 +87,6 @@ df_halv = df_label_ratings[
 # Low Arousal Negative Valence dataset
 df_lalv = df_label_ratings[
     (df_label_ratings['Valence'] < np.median(labels[:, 0])) & (df_label_ratings['Arousal'] < np.median(labels[:, 1]))]
-
-# Check nummber of trials per each group
-print("Positive Valence:", str(len(df_hahv) + len(df_lahv)))
-print("Negative Valence:", str(len(df_halv) + len(df_lalv)))
-print("High Arousal:", str(len(df_hahv) + len(df_halv)))
-print("Low Arousal:", str(len(df_lahv) + len(df_lalv)))
-
-# Check nummber of trials per each group
-print("High Arousal Positive Valence:", str(len(df_hahv)))
-print("Low Arousal Positive Valence:", str(len(df_lahv)))
-print("High Arousal Negative Valence:", str(len(df_halv)))
-print("Low Arousal Negative Valence:", str(len(df_lalv)))
-
-# Get mean and std of each group
-print("HAHV")
-print("Valence:", "Mean", np.round(df_hahv['Valence'].mean(), 2), "STD", np.round(df_hahv['Valence'].std(), 2))
-print("Arousal:", "Mean", np.round(df_hahv['Arousal'].mean(), 2), "STD", np.round(df_hahv['Arousal'].std(), 2))
-print()
-print("LAHV:")
-print("Valence:", "Mean", np.round(df_lahv['Valence'].mean(), 2), "STD", np.round(df_lahv['Valence'].std(), 2))
-print("Arousal:", "Mean", np.round(df_lahv['Arousal'].mean(), 2), "STD", np.round(df_lahv['Arousal'].std(), 2))
-print()
-print("HALV:")
-print("Valence:", "Mean", np.round(df_halv['Valence'].mean(), 2), "STD", np.round(df_halv['Valence'].std(), 2))
-print("Arousal:", "Mean", np.round(df_halv['Arousal'].mean(), 2), "STD", np.round(df_halv['Arousal'].std(), 2))
-print()
-print("LALV:")
-print("Valence:", "Mean", np.round(df_lalv['Valence'].mean(), 2), "STD", np.round(df_lalv['Valence'].std(), 2))
-print("Arousal:", "Mean", np.round(df_lalv['Arousal'].mean(), 2), "STD", np.round(df_lalv['Arousal'].std(), 2))
-
-# Valence and Arousal ratings between groups
-fig, axs = plt.subplots(1, 2, figsize=(12, 4))
-
-axs[0].set_title("Valence")
-axs[0].set_ylim(1, 9)
-axs[0].boxplot([df_hahv['Valence'], df_lahv['Valence'], df_halv['Valence'], df_lalv['Valence']],
-               labels=['HAHV', 'LAHV', 'HALV', 'LALV'])
-
-axs[1].set_title("Arousal")
-axs[1].set_ylim(1, 9)
-axs[1].boxplot([df_hahv['Arousal'], df_lahv['Arousal'], df_halv['Arousal'], df_lalv['Arousal']],
-               labels=['HAHV', 'LAHV', 'HALV', 'LALV'])
-
-# Valence and Arousal ratings per group
-fig, axs = plt.subplots(2, 2, figsize=(12, 8))
-
-axs[0, 0].set_title("HAHV")
-axs[0, 0].set_ylim(1, 9)
-axs[0, 0].boxplot([df_hahv['Valence'], df_hahv['Arousal']], labels=['Valence', 'Arousal'])
-
-axs[0, 1].set_title("LAHV")
-axs[0, 1].set_ylim(1, 9)
-axs[0, 1].boxplot([df_lahv['Valence'], df_lahv['Arousal']], labels=['Valence', 'Arousal'])
-
-axs[1, 0].set_title("HALV")
-axs[1, 0].set_ylim(1, 9)
-axs[1, 0].boxplot([df_halv['Valence'], df_halv['Arousal']], labels=['Valence', 'Arousal'])
-
-axs[1, 1].set_title("LALV")
-axs[1, 1].set_ylim(1, 9)
-axs[1, 1].boxplot([df_lalv['Valence'], df_lalv['Arousal']], labels=['Valence', 'Arousal'])
 
 
 # Function to check if each trial has positive or negative valence
@@ -192,105 +121,9 @@ for i in range(len(data)):
     for j in range(len(eeg_channels)):
         eeg_data.append(data[i, j])
 eeg_data = np.reshape(eeg_data, (len(data), len(eeg_channels), len(data[0, 0])))
-print(eeg_data.shape)
 
-sns.set(font_scale=1.2)
-
-# Define sampling frequency and time vector
-sf = 128.
-time = np.arange(eeg_data.size) / sf
-
-# Plot the signal of first trial, last channel
-fig, ax = plt.subplots(1, 1, figsize=(16, 4))
-plt.plot(eeg_data[0, 31], lw=1.5, color='k')
-plt.xlabel('Time')
-plt.ylabel('Voltage')
-sns.despine()
-
-# Define window length (4 seconds)
-win = 4 * sf
-freqs, psd = signal.welch(eeg_data[0, 31], sf, nperseg=win)
-
-# Plot the power spectrum
-sns.set(font_scale=1.2, style='white')
-plt.figure(figsize=(8, 4))
-plt.plot(freqs, psd, color='k', lw=2)
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power spectral density (V^2 / Hz)')
-plt.ylim([0, psd.max() * 1.1])
-plt.title("Welch's periodogram")
-plt.xlim([0, freqs.max()])
-sns.despine()
-
-# Define theta lower and upper limits
-low, high = 4, 8
-
-# Find intersecting values in frequency vector
-idx_theta = np.logical_and(freqs >= low, freqs <= high)
-
-# Plot the power spectral density and fill the theta area
-plt.figure(figsize=(7, 4))
-plt.plot(freqs, psd, lw=2, color='k')
-plt.fill_between(freqs, psd, where=idx_theta, color='skyblue')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power spectral density (uV^2 / Hz)')
-plt.xlim([0, 50])
-plt.ylim([0, psd.max() * 1.1])
-plt.title("Welch's periodogram")
-sns.despine()
-
-# Define alpha lower and upper limits
-low, high = 8, 12
-
-# Find intersecting values in frequency vector
-idx_alpha = np.logical_and(freqs >= low, freqs <= high)
-
-# Plot the power spectral density and fill the alpha area
-plt.figure(figsize=(7, 4))
-plt.plot(freqs, psd, lw=2, color='k')
-plt.fill_between(freqs, psd, where=idx_alpha, color='skyblue')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power spectral density (uV^2 / Hz)')
-plt.xlim([0, 50])
-plt.ylim([0, psd.max() * 1.1])
-plt.title("Welch's periodogram")
-sns.despine()
-
-# Define beta lower and upper limits
-low, high = 12, 30
-
-# Find intersecting values in frequency vector
-idx_beta = np.logical_and(freqs >= low, freqs <= high)
-
-# Plot the power spectral density and fill the beta area
-plt.figure(figsize=(7, 4))
-plt.plot(freqs, psd, lw=2, color='k')
-plt.fill_between(freqs, psd, where=idx_beta, color='skyblue')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power spectral density (uV^2 / Hz)')
-plt.xlim([0, 50])
-plt.ylim([0, psd.max() * 1.1])
-plt.title("Welch's periodogram")
-sns.despine()
-
-# Define delta lower and upper limits
-low, high = 30, 64
-
-# Find intersecting values in frequency vector
-idx_gamma = np.logical_and(freqs >= low, freqs <= high)
-
-# Plot the power spectral density and fill the gamma area
-plt.figure(figsize=(7, 4))
-plt.plot(freqs, psd, lw=2, color='k')
-plt.fill_between(freqs, psd, where=idx_gamma, color='skyblue')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Power spectral density (uV^2 / Hz)')
-plt.xlim([0, 50])
-plt.ylim([0, psd.max() * 1.1])
-plt.title("Welch's periodogram")
-sns.despine()
-
-"""Compute the average power of the signal x in a specific frequency band.
+"""
+   Compute the average power of the signal x in a specific frequency band.
 
     Parameters
     ----------
@@ -311,7 +144,7 @@ sns.despine()
     ------
     bp : float
         Absolute or relative band power.
-    """
+"""
 
 
 def bandpower(data, sf, band, window_sec=None, relative=False):
@@ -356,24 +189,9 @@ def get_band_power(trial, channel, band):
     return bandpower(eeg_data[trial, channel], 128, bd)
 
 
-print(get_band_power(0, 31, "theta"))
-print(get_band_power(0, 31, "alpha"))
-print(get_band_power(0, 31, "beta"))
-print(get_band_power(0, 31, "gamma"))
-
-info = mne.create_info(32, sfreq=128)
-print(info)
-
 info = mne.create_info(eeg_channels.tolist(), ch_types=32 * ['eeg'], sfreq=128)
 info.set_montage('standard_1020')
-print(info)
-
 raw_data = mne.io.RawArray(eeg_data[31], info)
-
-# Plot sensor positions
-montage = mne.channels.make_standard_montage("biosemi32")
-raw_data.set_montage(montage)
-montage.plot()
 
 # Plot the power spectral density across channels
 mne.viz.plot_raw_psd(raw_data, fmin=4, fmax=45)
