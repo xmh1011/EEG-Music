@@ -1,39 +1,27 @@
-import os
-import time
-import pickle
-import pandas as pd
-import numpy as np
-
-from scipy import signal
-from scipy.signal import welch
-from scipy.integrate import simps
-from scipy.stats import f_oneway
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn import model_selection
-from sklearn.metrics import classification_report, confusion_matrix
 import itertools
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import precision_recall_curve
-
-import mne
-from mne.preprocessing import (ICA, create_eog_epochs, create_ecg_epochs, corrmap)
-from mne.time_frequency import psd_welch
-from mne.decoding import cross_val_multiscore
-
-from fooof import FOOOFGroup
-from fooof.bands import Bands
-from fooof.analysis import get_band_peak_fg
-from fooof.plts.spectra import plot_spectrum
+import pickle
+import time
 
 import matplotlib.pyplot as plt
+import mne
+import numpy as np
+import pandas as pd
+from fooof import FOOOFGroup
+from fooof.analysis import get_band_peak_fg
+from fooof.bands import Bands
 from matplotlib import cm
-import seaborn as sns
+from mne.time_frequency import psd_welch
+from scipy.integrate import simps
+from scipy.signal import welch
+from sklearn import model_selection
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 
 # Function to load data from each participant file
@@ -58,7 +46,7 @@ labels = []
 data = []
 
 for i in files:
-    filename = "/content/gdrive/Shared drives/Cognitive Systems Project/DEAP_DATASET/data_preprocessed_python/s" + i + ".dat"
+    filename = "./eeg_data/s" + i + ".dat"
     trial = read_eeg_signal_from_file(filename)
     labels.append(trial['labels'])
     data.append(trial['data'])
@@ -105,7 +93,6 @@ for i in range(len(labels)):
     labels_encoded.append([positive_valence(i), high_arousal(i)])
 labels_encoded = np.reshape(labels_encoded, (880, 2))
 df_labels = pd.DataFrame(data=labels_encoded, columns=["Positive Valence", "High Arousal"])
-print(df_labels.describe())
 
 # Dataset with only Valence column
 df_valence = df_labels['Positive Valence']
@@ -193,59 +180,29 @@ info = mne.create_info(eeg_channels.tolist(), ch_types=32 * ['eeg'], sfreq=128)
 info.set_montage('standard_1020')
 raw_data = mne.io.RawArray(eeg_data[31], info)
 
-# Plot the power spectral density across channels
-mne.viz.plot_raw_psd(raw_data, fmin=4, fmax=45)
+times = np.arange(0.05, 0.251, 0.04)
 
 # Theta band, first trial
 evData_th = mne.EvokedArray(eeg_data[0], info)
-times = np.arange(0.05, 0.251, 0.04)
 evData_th.filter(4, 8)
-evData_th.plot_topomap(times, ch_type='eeg', average=60, time_unit='s')
 
 # Alpha band, first trial
 evData_al = mne.EvokedArray(eeg_data[0], info)
-times = np.arange(0.05, 0.251, 0.04)
 evData_al.filter(8, 12)
-evData_al.plot_topomap(times, ch_type='eeg', average=60, time_unit='s')
 
 # Beta band, first trial
 evData_bt = mne.EvokedArray(eeg_data[0], info)
-times = np.arange(0.05, 0.251, 0.04)
 evData_bt.filter(12, 30)
-evData_bt.plot_topomap(times, ch_type='eeg', average=60, time_unit='s')
 
 # Gamma band, first trial
 evData_gm = mne.EvokedArray(eeg_data[0], info)
-times = np.arange(0.05, 0.251, 0.04)
 evData_gm.filter(30, 63.9)
-evData_gm.plot_topomap(times, ch_type='eeg', average=60, time_unit='s')
 
 # Getting samples from 4 label groups, same subject
 ev_data_hahv = mne.EvokedArray(eeg_data[1], info)
 ev_data_halv = mne.EvokedArray(eeg_data[14], info)
 ev_data_lahv = mne.EvokedArray(eeg_data[6], info)
 ev_data_lalv = mne.EvokedArray(eeg_data[9], info)
-
-
-# Plot the topographies across different frequency bands
-def plot_topo_psd(evData):
-    evData.filter(4, 8)
-    evData.plot_topomap(0.15, ch_type='eeg', average=60, time_unit='s')
-
-    evData.filter(8, 12)
-    evData.plot_topomap(0.15, ch_type='eeg', average=60, time_unit='s')
-
-    evData.filter(12, 30)
-    evData.plot_topomap(0.15, ch_type='eeg', average=60, time_unit='s')
-
-    evData.filter(30, 63.9)
-    evData.plot_topomap(0.15, ch_type='eeg', average=60, time_unit='s')
-
-
-plot_topo_psd(ev_data_hahv)
-plot_topo_psd(ev_data_halv)
-plot_topo_psd(ev_data_lahv)
-plot_topo_psd(ev_data_lalv)
 
 
 # Deal with NaN values when the model cannot detect peaks in any given range
@@ -262,51 +219,6 @@ def check_nans(data, nan_policy='zero'):
         raise ValueError('Nan policy not understood.')
     return data
 
-
-# Plot the topographies across different frequency bands
-def plot_psd_fooof(evData):
-    fg = FOOOFGroup(peak_width_limits=[1, 6], min_peak_height=0.05, peak_threshold=2., max_n_peaks=6, verbose=False)
-    bands = Bands({'theta': [4, 8], 'alpha': [8, 12], 'beta': [12, 30], 'gamma': [30, 64]})
-    freq_range = [1, 128]
-    # Calculate power spectra across the the continuous data by MNE
-    spectra, freqs = psd_welch(evData, fmin=1, fmax=128, tmin=0, tmax=250, n_overlap=150, n_fft=300)
-    fg.fit(freqs, spectra, freq_range)
-    # Plot the topographies across different frequency bands
-    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
-    for ind, (label, band_def) in enumerate(bands):
-        # Extract the power peaks across channels for the current band
-        band_power = check_nans(get_band_peak_fg(fg, band_def)[:, 1])
-        # Create a topomap for the current oscillation band
-        mne.viz.plot_topomap(band_power, evData.info, cmap=cm.viridis, axes=axes[ind], show=False);
-        axes[ind].set_title(label + ' power', {'fontsize': 16})
-
-
-def plot_psd_peak(evData):
-    fg = FOOOFGroup(peak_width_limits=[1, 6], min_peak_height=0.05, peak_threshold=2., max_n_peaks=6, verbose=False)
-    bands = Bands({'theta': [4, 8], 'alpha': [8, 12], 'beta': [12, 30], 'gamma': [30, 64]})
-    freq_range = [1, 128]
-    # Calculate power spectra across the the continuous data by MNE
-    spectra, freqs = psd_welch(evData, fmin=1, fmax=128, tmin=0, tmax=250, n_overlap=150, n_fft=300)
-    fg.fit(freqs, spectra, freq_range)
-    # Check the largest detected peaks within each band
-    fig, axes = plt.subplots(1, 4, figsize=(20, 6))
-    for ind, (label, band_def) in enumerate(bands):
-        # Get the power values across channels for the current band
-        band_power = check_nans(get_band_peak_fg(fg, band_def)[:, 1])
-        # Extracted and plot the power spectrum model with the most band power
-        fg.get_fooof(np.argmax(band_power)).plot(ax=axes[ind], add_legend=False)
-        axes[ind].yaxis.set_ticklabels([])
-        axes[ind].set_title('biggest ' + label + ' peak', {'fontsize': 16})
-
-
-plot_psd_fooof(ev_data_hahv)
-plot_psd_peak(ev_data_hahv)
-plot_psd_fooof(ev_data_halv)
-plot_psd_peak(ev_data_halv)
-plot_psd_fooof(ev_data_lahv)
-plot_psd_peak(ev_data_lahv)
-plot_psd_fooof(ev_data_lalv)
-plot_psd_peak(ev_data_lalv)
 
 # Transform 880 x 32 x 8064 => 880 x 128
 eeg_band_arr = []
@@ -333,10 +245,6 @@ for i in range(len(eeg_data)):
 eeg_theta = np.reshape(eeg_theta, (880, 32))
 
 df_theta = pd.DataFrame(data=eeg_theta, columns=eeg_channels)
-print(df_theta.describe())
-
-# Only print central channels
-print(df_theta[central].head(5))
 
 # Transform 880 x 32 x 8064 => 880 x 32
 eeg_alpha = []
@@ -346,10 +254,6 @@ for i in range(len(eeg_data)):
 eeg_alpha = np.reshape(eeg_alpha, (880, 32))
 
 df_alpha = pd.DataFrame(data=eeg_alpha, columns=eeg_channels)
-print(df_alpha.describe())
-
-# Only print occipital channels
-print(df_alpha[occipital].head(5))
 
 # Transform 880 x 32 x 8064 => 880 x 32
 eeg_beta = []
@@ -359,10 +263,6 @@ for i in range(len(eeg_data)):
 eeg_beta = np.reshape(eeg_beta, (880, 32))
 
 df_beta = pd.DataFrame(data=eeg_beta, columns=eeg_channels)
-print(df_beta.describe())
-
-# Only print frontal channels
-print(df_beta[frontal].head(5))
 
 # Transform 880 x 32 x 8064 => 880 x 32
 eeg_gamma = []
@@ -372,10 +272,6 @@ for i in range(len(eeg_data)):
 eeg_gamma = np.reshape(eeg_gamma, (880, 32))
 
 df_gamma = pd.DataFrame(data=eeg_gamma, columns=eeg_channels)
-print(df_gamma.describe())
-
-# Only print parietal channels
-print(df_gamma[parietal].head(5))
 
 
 # Split the data into training/testing sets
@@ -409,8 +305,6 @@ models = []
 models.append(('SVM', clf_svm))
 models.append(('k-NN', clf_knn))
 models.append(('MLP', clf_mlp))
-
-import time
 
 
 def cross_validate_clf(df_x, df_y, scoring):
@@ -551,37 +445,6 @@ def print_f1(label, clf):
     print(df)
 
 
-def plot_cm(band, channel, label, clf):
-    y_test2, y_predict = run_clf_cv(band, channel, label, clf)
-    cm = confusion_matrix(y_test2, y_predict)
-    print(cm)
-    cr = classification_report(y_test2, y_predict)
-    print(cr)
-
-    plt.figure()
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.colorbar()
-
-    if (label == "valence"):
-        classes = df_valence.unique().tolist()
-    if (label == "arousal"):
-        classes = df_arousal.unique().tolist()
-
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], 'd'),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-
-
 # Only use k-NN in case of Valence after CV
 print_accuracy('valence', 'knn')
 
@@ -593,13 +456,3 @@ print_f1('valence', 'knn')
 
 # Only use MLP in case of Arousal after CV
 print_f1('arousal', 'mlp')
-
-plot_cm('theta', 'central', 'valence', 'knn')
-
-plot_cm('beta', 'left', 'valence', 'knn')
-
-plot_cm('gamma', 'right', 'valence', 'knn')
-
-plot_cm('alpha', 'central', 'arousal', 'mlp')
-
-plot_cm('theta', 'parietal', 'arousal', 'mlp')

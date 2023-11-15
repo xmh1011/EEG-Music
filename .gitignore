@@ -164,5 +164,3 @@ cython_debug/
 音乐.mp3
 
 eeg_data
-/eeg_data
-!/eeg_data/s01.dat
