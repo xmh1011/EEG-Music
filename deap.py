@@ -1,21 +1,13 @@
-import itertools
 import pickle
 import time
 
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import pandas as pd
-from fooof import FOOOFGroup
-from fooof.analysis import get_band_peak_fg
-from fooof.bands import Bands
-from matplotlib import cm
-from mne.time_frequency import psd_welch
 from scipy.integrate import simps
 from scipy.signal import welch
 from sklearn import model_selection
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
