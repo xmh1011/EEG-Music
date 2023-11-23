@@ -166,3 +166,4 @@ cython_debug/
 eeg_data
 data
 eeg_based_emotion_classification.ipynb
+./eeg_based_emotion_classification.ipynb
