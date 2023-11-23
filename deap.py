@@ -1,6 +1,5 @@
 import pickle
 import time
-
 import mne
 import numpy as np
 import pandas as pd
@@ -166,50 +165,6 @@ def get_band_power(trial, channel, band):
         bd = (30, 64)
 
     return bandpower(eeg_data[trial, channel], 128, bd)
-
-
-info = mne.create_info(eeg_channels.tolist(), ch_types=32 * ['eeg'], sfreq=128)
-info.set_montage('standard_1020')
-raw_data = mne.io.RawArray(eeg_data[31], info)
-
-times = np.arange(0.05, 0.251, 0.04)
-
-# Theta band, first trial
-evData_th = mne.EvokedArray(eeg_data[0], info)
-evData_th.filter(4, 8)
-
-# Alpha band, first trial
-evData_al = mne.EvokedArray(eeg_data[0], info)
-evData_al.filter(8, 12)
-
-# Beta band, first trial
-evData_bt = mne.EvokedArray(eeg_data[0], info)
-evData_bt.filter(12, 30)
-
-# Gamma band, first trial
-evData_gm = mne.EvokedArray(eeg_data[0], info)
-evData_gm.filter(30, 63.9)
-
-# Getting samples from 4 label groups, same subject
-ev_data_hahv = mne.EvokedArray(eeg_data[1], info)
-ev_data_halv = mne.EvokedArray(eeg_data[14], info)
-ev_data_lahv = mne.EvokedArray(eeg_data[6], info)
-ev_data_lalv = mne.EvokedArray(eeg_data[9], info)
-
-
-# Deal with NaN values when the model cannot detect peaks in any given range
-def check_nans(data, nan_policy='zero'):
-    """Check an array for nan values, and replace, based on policy."""
-    # Find where there are nan values in the data
-    nan_inds = np.where(np.isnan(data))
-    # Apply desired nan policy to data
-    if nan_policy == 'zero':
-        data[nan_inds] = 0
-    elif nan_policy == 'mean':
-        data[nan_inds] = np.nanmean(data)
-    else:
-        raise ValueError('Nan policy not understood.')
-    return data
 
 
 # Transform 880 x 32 x 8064 => 880 x 128
