@@ -51,6 +51,7 @@ hvha_data = np.array(hvha_data)
 hvla_data = np.array(hvla_data)
 lvha_data = np.array(lvha_data)
 lvla_data = np.array(lvla_data)
+print(hvha_data.shape)
 
 eeg_channels = np.array(
     ['Fp1', 'Fp2', 'AF3', 'AF4', 'Fz', 'F3', 'F4', 'F7', 'F8', 'FC1', 'FC2', 'FC5', 'FC6', 'Cz', 'C3', 'C4', 'T7', 'T8',
