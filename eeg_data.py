@@ -18,6 +18,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
+# TODO: @Zohix1 deal with the data, keep consistent with deap dataset.
 
 def get_filenames_in_folder(folder_path):
     filenames = glob.glob(os.path.join(folder_path, '*'))
