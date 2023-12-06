@@ -50,23 +50,6 @@ data = np.array(data)
 data = data.flatten()
 data = data.reshape(880, 40, 8064)
 
-# Only extract Valence and Arousal ratings
-df_label_ratings = pd.DataFrame({'Valence': labels[:, 0], 'Arousal': labels[:, 1]})
-
-# High Arousal Positive Valence dataset
-df_hahv = df_label_ratings[
-    (df_label_ratings['Valence'] >= np.median(labels[:, 0])) & (df_label_ratings['Arousal'] >= np.median(labels[:, 1]))]
-# Low Arousal Positive Valence dataset
-df_lahv = df_label_ratings[
-    (df_label_ratings['Valence'] >= np.median(labels[:, 0])) & (df_label_ratings['Arousal'] < np.median(labels[:, 1]))]
-# High Arousal Negative Valence dataset
-df_halv = df_label_ratings[
-    (df_label_ratings['Valence'] < np.median(labels[:, 0])) & (df_label_ratings['Arousal'] >= np.median(labels[:, 1]))]
-# Low Arousal Negative Valence dataset
-df_lalv = df_label_ratings[
-    (df_label_ratings['Valence'] < np.median(labels[:, 0])) & (df_label_ratings['Arousal'] < np.median(labels[:, 1]))]
-
-
 # Function to check if each trial has positive or negative valence
 def positive_valence(trial):
     return 1 if labels[trial, 0] >= np.median(labels[:, 0]) else 0
