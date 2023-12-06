@@ -1,9 +1,10 @@
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
+from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, Flatten, Dense
+from keras.models import Sequential
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -269,3 +270,43 @@ class VigilanceNet(nn.Module):
         out = self.predict(out)
 
         return out, out1, out2
+
+
+def EEGNet(input_shape, num_classes):
+    model = Sequential()
+
+    # 第一层卷积
+    model.add(Conv2D(16, (1, 32), padding='same', activation='relu', input_shape=input_shape))
+    model.add(BatchNormalization())
+    model.add(Conv2D(16, (1, 32), padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((1, 4)))
+
+    # 第二层卷积
+    model.add(Conv2D(32, (1, 32), padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(32, (1, 32), padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((1, 4)))
+
+    # 展平层
+    model.add(Flatten())
+
+    # 全连接层
+    model.add(Dense(128, activation='relu'))
+
+    # 输出层
+    model.add(Dense(num_classes, activation='softmax'))
+
+    return model
+
+
+# 定义输入数据的形状和类别数
+input_shape = (32, 3000, 1)  # 32通道，每个通道3000个时间点
+num_classes = 2  # 假设有2个类别
+
+# 创建EEGNet模型
+model = EEGNet(input_shape, num_classes)
+
+# 打印模型结构
+model.summary()

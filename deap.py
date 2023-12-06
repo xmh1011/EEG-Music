@@ -1,6 +1,5 @@
 import pickle
 import time
-import mne
 import numpy as np
 import pandas as pd
 from scipy.integrate import simps
@@ -279,10 +278,6 @@ def cross_validate_clf(df_x, df_y, scoring):
     return names, means, stds, times
 
 
-cross_validate_clf(eeg_band_arr, df_arousal, 'accuracy')
-cross_validate_clf(eeg_band_arr, df_arousal, 'f1')
-
-
 def run_clf_cv(band, channel, label, clf):
     if band == "theta":
         df_x = df_theta
@@ -392,14 +387,22 @@ def print_f1(label, clf):
     print(df)
 
 
-# Only use k-NN in case of Valence after CV
+cross_validate_clf(eeg_band_arr, df_valence, 'accuracy')
+cross_validate_clf(eeg_band_arr, df_valence, 'f1')
+cross_validate_clf(eeg_band_arr, df_arousal, 'accuracy')
+cross_validate_clf(eeg_band_arr, df_arousal, 'f1')
+
+print("Only use k-NN in case of Valence after CV")
 print_accuracy('valence', 'knn')
 
-# Only use MLP in case of Arousal after CV
+print()
+print("Only use MLP in case of Arousal after CV")
 print_accuracy('arousal', 'mlp')
 
-# Only use k-NN in case of Valence after CV
+print()
+print("Only use k-NN in case of Valence after CV")
 print_f1('valence', 'knn')
 
-# Only use MLP in case of Arousal after CV
+print()
+print("Only use MLP in case of Arousal after CV")
 print_f1('arousal', 'mlp')

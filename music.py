@@ -16,13 +16,11 @@ def convert_mp3_to_wav(mp3_file, wav_file):
     audio.export(wav_file, format='wav')
 
 
-def extract_audio_features(wav_file, sample_rate, frequency):
+# 使用梅尔倒谱系数提取音频特征
+def extract_audio_features(wav_file, sample_rate, num_mfcc):
     audio, sr = librosa.load(wav_file, sr=sample_rate)
-    stft = librosa.stft(audio)
-    magnitude = np.abs(stft)
-    frequency_bin = int(frequency * stft.shape[0] / sr)
-    frequency_samples = magnitude[frequency_bin, :]
-    return frequency_samples
+    mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=num_mfcc) # 提取mfcc特征
+    return mfcc.T
 
 
 def get_music_features(file_path):
