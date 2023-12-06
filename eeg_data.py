@@ -45,23 +45,7 @@ data = np.array(data)
 data = data.flatten()
 data = data.reshape(76, 32, 25938)
 
-
-# Function to check if each trial has positive or negative valence
-def positive_valence(trial):
-    return labels[trial, 0]
-
-
-# Function to check if each trial has high or low arousal
-def high_arousal(trial):
-    return labels[trial, 1]
-
-
-# Convert all ratings to boolean values
-labels_encoded = []
-for i in range(len(labels)):
-    labels_encoded.append([positive_valence(i), high_arousal(i)])
-labels_encoded = np.reshape(labels_encoded, (76, 2))
-df_labels = pd.DataFrame(data=labels_encoded, columns=["Positive Valence", "High Arousal"])
+df_labels = pd.DataFrame(data=labels, columns=["Positive Valence", "High Arousal"])
 
 # Dataset with only Valence column
 df_valence = df_labels['Positive Valence']
@@ -71,12 +55,6 @@ df_arousal = df_labels['High Arousal']
 eeg_channels = np.array(
     ['Fp1', 'Fp2', 'AF3', 'AF4', 'Fz', 'F3', 'F4', 'F7', 'F8', 'FC1', 'FC2', 'FC5', 'FC6', 'Cz', 'C3', 'C4', 'T7', 'T8',
      'CP1', 'CP2', 'CP5', 'CP6', 'Pz', 'P3', 'P4', 'P7', 'P8', 'PO3', 'PO4', 'Oz', 'O1', 'O2'])
-
-eeg_data = []
-for i in range(len(data)):
-    for j in range(len(eeg_channels)):
-        eeg_data.append(data[i, j])
-eeg_data = np.reshape(eeg_data, (len(data), len(eeg_channels), len(data[0, 0])))
 
 """
    Compute the average power of the signal x in a specific frequency band.
@@ -142,12 +120,12 @@ def get_band_power(trial, channel, band):
     elif band == "gamma":  # cognition, perception, learning, multi-tasking
         bd = (30, 64)
 
-    return bandpower(eeg_data[trial, channel], 128, bd)
+    return bandpower(data[trial, channel], 1000, bd)
 
 
 eeg_band_arr = []
-for i in range(len(eeg_data)):
-    for j in range(len(eeg_data[0])):
+for i in range(len(data)):
+    for j in range(len(data[0])):
         eeg_band_arr.append(get_band_power(i, j, "theta"))
         eeg_band_arr.append(get_band_power(i, j, "alpha"))
         eeg_band_arr.append(get_band_power(i, j, "beta"))
@@ -162,32 +140,32 @@ occipital = np.array(["O1", "Oz", "O2", "PO3", "PO4"])
 central = np.array(["CP5", "CP1", "Cz", "C4", "C3", "CP6", "CP2"])
 
 eeg_theta = []
-for i in range(len(eeg_data)):
-    for j in range(len(eeg_data[0])):
+for i in range(len(data)):
+    for j in range(len(data[0])):
         eeg_theta.append(get_band_power(i, j, "theta"))
 eeg_theta = np.reshape(eeg_theta, (76, 32))
 
 df_theta = pd.DataFrame(data=eeg_theta, columns=eeg_channels)
 
 eeg_alpha = []
-for i in range(len(eeg_data)):
-    for j in range(len(eeg_data[0])):
+for i in range(len(data)):
+    for j in range(len(data[0])):
         eeg_alpha.append(get_band_power(i, j, "alpha"))
 eeg_alpha = np.reshape(eeg_alpha, (76, 32))
 
 df_alpha = pd.DataFrame(data=eeg_alpha, columns=eeg_channels)
 
 eeg_beta = []
-for i in range(len(eeg_data)):
-    for j in range(len(eeg_data[0])):
+for i in range(len(data)):
+    for j in range(len(data[0])):
         eeg_beta.append(get_band_power(i, j, "beta"))
 eeg_beta = np.reshape(eeg_beta, (76, 32))
 
 df_beta = pd.DataFrame(data=eeg_beta, columns=eeg_channels)
 
 eeg_gamma = []
-for i in range(len(eeg_data)):
-    for j in range(len(eeg_data[0])):
+for i in range(len(data)):
+    for j in range(len(data[0])):
         eeg_gamma.append(get_band_power(i, j, "gamma"))
 eeg_gamma = np.reshape(eeg_gamma, (76, 32))
 
@@ -253,6 +231,7 @@ def cross_validate_clf(df_x, df_y, scoring):
 
 
 def run_clf_cv(band, channel, label, clf):
+    global df_x, x_train2, x_test2, y_train2, y_test2, y_predict
     if band == "theta":
         df_x = df_theta
     elif band == "alpha":
