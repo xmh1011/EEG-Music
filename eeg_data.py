@@ -81,7 +81,7 @@ eeg_channels = np.array(
 """
 
 
-def bandpower(data, sf, band, window_sec=None, relative=False):
+def bandpower(data, sf, band, window_sec, relative=False):
     band = np.asarray(band)
     low, high = band
 
@@ -120,7 +120,7 @@ def get_band_power(trial, channel, band):
     elif band == "gamma":  # cognition, perception, learning, multi-tasking
         bd = (30, 64)
 
-    return bandpower(data[trial, channel], 1000, bd)
+    return bandpower(data[trial, channel], 1000, bd, 4.0, True)
 
 
 eeg_band_arr = []
@@ -143,32 +143,32 @@ eeg_theta = []
 for i in range(len(data)):
     for j in range(len(data[0])):
         eeg_theta.append(get_band_power(i, j, "theta"))
-eeg_theta = np.reshape(eeg_theta, (76, 32))
 
+eeg_theta = np.reshape(eeg_theta, (76, 32))
 df_theta = pd.DataFrame(data=eeg_theta, columns=eeg_channels)
 
 eeg_alpha = []
 for i in range(len(data)):
     for j in range(len(data[0])):
         eeg_alpha.append(get_band_power(i, j, "alpha"))
-eeg_alpha = np.reshape(eeg_alpha, (76, 32))
 
+eeg_alpha = np.reshape(eeg_alpha, (76, 32))
 df_alpha = pd.DataFrame(data=eeg_alpha, columns=eeg_channels)
 
 eeg_beta = []
 for i in range(len(data)):
     for j in range(len(data[0])):
         eeg_beta.append(get_band_power(i, j, "beta"))
-eeg_beta = np.reshape(eeg_beta, (76, 32))
 
+eeg_beta = np.reshape(eeg_beta, (76, 32))
 df_beta = pd.DataFrame(data=eeg_beta, columns=eeg_channels)
 
 eeg_gamma = []
 for i in range(len(data)):
     for j in range(len(data[0])):
         eeg_gamma.append(get_band_power(i, j, "gamma"))
-eeg_gamma = np.reshape(eeg_gamma, (76, 32))
 
+eeg_gamma = np.reshape(eeg_gamma, (76, 32))
 df_gamma = pd.DataFrame(data=eeg_gamma, columns=eeg_channels)
 
 
@@ -187,17 +187,17 @@ def feature_scaling(train, test):
 
 
 band_names = np.array(["theta", "alpha", "beta", "gamma"])
-channel_names = np.array(["left", "frontal", "right", "central", "parietal", "occipital"])
+channel_names = np.array(["left", "frontal", "right", "central", "parietal", "occipital", "all"])
 label_names = np.array(["valence", "arousal"])
 
 # Testing different kernels (linear, sigmoid, rbf, poly) to select the most optimal one
-clf_svm = SVC(kernel='linear', random_state=42, probability=True, max_iter=10000000)
+clf_svm = SVC(kernel='sigmoid', random_state=42, probability=True, max_iter=10000000)
 
 # Testing different k (odd) numbers, algorithm (auto, ball_tree, kd_tree) and weight (uniform, distance) to select the most optimal one
 clf_knn = KNeighborsClassifier(n_neighbors=5, weights='distance', algorithm='auto')
 
 # Testing different learning rate (alpha), solver (adam, sgd, lbfgs) and activation (relu, tanh, logistic) to select the most optimal one
-clf_mlp = MLPClassifier(solver='adam', activation='tanh', alpha=0.3, max_iter=10000000)
+clf_mlp = MLPClassifier(solver='adam', activation='relu', alpha=0.3, max_iter=10000000)
 
 models = []
 models.append(('SVM', clf_svm))
@@ -253,6 +253,8 @@ def run_clf_cv(band, channel, label, clf):
         df_x = df_x[parietal]
     elif channel == "occipital":
         df_x = df_x[occipital]
+    elif channel == "all":
+        df_x = df_x
 
     df_y = df_arousal if (label == "arousal") else df_valence
 
@@ -294,7 +296,7 @@ def print_accuracy(label, clf):
     for i in range(len(band_names)):
         for j in range(len(channel_names)):
             arr.append(get_accuracy(band_names[i], channel_names[j], label, clf))
-    arr = np.reshape(arr, (4, 6))
+    arr = np.reshape(arr, (4, 7))
     df = pd.DataFrame(data=arr, index=band_names, columns=channel_names)
 
     print("Top 3 EEG regions with highest scores")
@@ -322,7 +324,7 @@ def print_f1(label, clf):
     for i in range(len(band_names)):
         for j in range(len(channel_names)):
             arr.append(get_f1(band_names[i], channel_names[j], label, clf))
-    arr = np.reshape(arr, (4, 6))
+    arr = np.reshape(arr, (4, 7))
     df = pd.DataFrame(data=arr, index=band_names, columns=channel_names)
 
     print("Top 3 EEG regions with highest scores")
@@ -349,13 +351,21 @@ print("Only use k-NN in case of Valence after CV")
 print_accuracy('valence', 'knn')
 
 print()
-print("Only use MLP in case of Arousal after CV")
-print_accuracy('arousal', 'mlp')
-
-print()
 print("Only use k-NN in case of Valence after CV")
 print_f1('valence', 'knn')
 
 print()
 print("Only use MLP in case of Arousal after CV")
+print_accuracy('arousal', 'mlp')
+
+print()
+print("Only use MLP in case of Arousal after CV")
 print_f1('arousal', 'mlp')
+
+print()
+print("Only use SVM in case of Valence after CV")
+print_accuracy('valence', 'svm')
+
+print()
+print("Only use SVM in case of Arousal after CV")
+print_accuracy('arousal', 'svm')
