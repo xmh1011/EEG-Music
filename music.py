@@ -36,10 +36,15 @@ def get_music_features(file_path):
             audio_features.append(audio_feature)
 
     feature_1 = np.array(audio_features[0])
+    print(feature_1.shape)
     feature_2 = np.array(audio_features[1])
+    print(feature_2.shape)
     feature_3 = np.array(audio_features[2])
+    print(feature_3.shape)
     feature_4 = np.array(audio_features[3])
+    print(feature_4.shape)
     feature_5 = np.array(audio_features[4])
+    print(feature_5.shape)
 
     features = np.concatenate((feature_1, feature_2, feature_3, feature_4, feature_5), axis=0)
 
